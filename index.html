@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1 vs 1 Trivia Game</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="main">
-        <form>
-            <h1>Two-Player Trivia Battle Game</h1>
-            <div id="PlayerSetup">
-                <label for="player-1">Player1:</label>
-                <input type="text" id="player-1" placeholder="Enter Player-1 Name" />
-                <label for="player-2">Player2:</label>
-                <input type="text" id="player-2" placeholder="Enter Player-2 Name" />
-                <button type="button" onclick="start()">Start Game</button>
-            </div>
-    </form>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1 vs 1 trivia game</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="background"></div>
+    <div class="content">
+      <h1>1 vs 1 Trivia Game</h1>
     </div>
-    
-    <script src="script.js"></script>
-</body>
+    <div id="container">
+      <div id="player_1" class="player">
+        <label for="#">Player1</label>
+        <input type="text" id="name1" placeholder="player_1 name" required />
+      </div>
+
+      <div id="player_2" class="player">
+        <label for="#">Player2</label>
+        <input type="text" id="name2" placeholder="player_2 name" required />
+      </div>
+
+      <button class="btn1" id="submit" onclick="input()">Start the game</button>
+    </div>
+    <script src="./script.js"></script>
+  </body>
 </html>
