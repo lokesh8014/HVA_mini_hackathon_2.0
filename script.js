@@ -1,162 +1,191 @@
 
-let categories = [
-    'music',
-    'sport_and_leisure',
-    'film_and_tv',
-    'arts_and_literature',
-    'history',
-    'general_knowledge',
-  ];
-  let player1Score = 0;
-  let player2Score = 0;
-  let usedCategories = [];
-  let questionIndex = 0;
-  let totalQuestions = [];
-  let currentCategory = '';
-  
-  const start = () => {
-    const player1 = document.getElementById('player-1').value;
-    const player2 = document.getElementById('player-2').value;
-  
-    if (player1 === '' || player2 === '') {
-      alert("Please enter both the player's names");
-      return;
-    } else {
-      localStorage.setItem('player1', player1);
-      localStorage.setItem('player2', player2);
-      window.location.href = 'category.html';
-    }
-  };
-  
-  const fetchQuestions = async () => {
-    const selectedCategory = document.getElementById('categorySelect').value;
-  
-    if (!selectedCategory) {
-      alert('Please select a unused category');
+// input field
+function input() {
+  const name1 = document.getElementById('name1');
+  const name2 = document.getElementById('name2');
+  if (name1.value.trim() === '' || name2.value.trim() === '') {
+    alert('Enter both player names');
+  } else {
+    localStorage.setItem('player1', name1.value);
+    localStorage.setItem('player2', name2.value);
+    window.location.href = 'category.html';
+  }
+}
+
+
+//fetching questions function
+let questionIndex = 0;
+let totalQuestions = [];
+let player1Score = 0;
+let player2Score = 0;
+
+async function fetchQuestions() {
+    const category = document.getElementById('category_selection').value;
+
+    if(!category){
+      alert('Please select a valid category');
       return;
     }
-  
-    currentCategory = selectedCategory;
-    usedCategories.push(currentCategory);
-    document.getElementById('categorySelection').style.display = "none";
-  
-    const difficultyLevels = ['easy', 'medium', 'hard'];
-    totalQuestions = [];
-  
-    try {
-      for (const difficulty of difficultyLevels) {
-        const response = await fetch(
-          `https://the-trivia-api.com/v2/questions?categories=${selectedCategory}&limit=2&difficulties=${difficulty}`
-        );
-        const data = await response.json();
-        if (data && data.length > 0) {
-          totalQuestions = totalQuestions.concat(data);
-        } else {
-          alert('No questions found. Please try a different category.');
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load questions', error);
-      alert('Error : fetching questions. Please try again later.');
-      return;
-    }
-  
-    questionIndex = 0;
-    document.getElementById('questionsContainer').style.display = 'block';
-    displayNextQuestion();
-  };
-  
-  const displayNextQuestion = () => {
-    const questionContainer = document.getElementById('questionsContainer');
-    questionContainer.innerHTML = '';
-  
-    if (questionIndex >= totalQuestions.length) {
-      document.getElementById('postQuestionOptions').style.display = 'block';
-      return;
-    }
-  
-    const questionObj = totalQuestions[questionIndex];
-    const player1 = localStorage.getItem('player1');
-    const player2 = localStorage.getItem('player2');
-  
-    const heading = document.createElement('h3');
-    heading.textContent = questionIndex % 2 === 0 ? `${player1}'s turn` : `${player2}'s turn`;
-    questionContainer.appendChild(heading);
-  
-    const questionDisplay = document.createElement('p');
-    questionDisplay.textContent = questionObj.question.text;
-    questionContainer.appendChild(questionDisplay);
-  
-    const options = [...questionObj.incorrectAnswers, questionObj.correctAnswer].sort(() => Math.random() - 0.5);
-  
-    options.forEach((option) => {
-        const label = document.createElement('label');
-        const checkboxInput = document.createElement('input');
-        checkboxInput.type = 'checkbox';
-        checkboxInput.name = 'answer-value';
-        checkboxInput.value = option;
-        checkboxInput.classList.add('option-checkbox'); 
-        label.appendChild(checkboxInput);
-        label.appendChild(document.createTextNode(option));
-        questionContainer.appendChild(label);
-        questionContainer.appendChild(document.createElement('br'));
-      
-        
-        checkboxInput.addEventListener('change', () => {
-          
-          const allCheckboxes = document.querySelectorAll('.option-checkbox');
-          allCheckboxes.forEach((box) => {
-            if (box !== checkboxInput) {
-              box.checked = false; 
-            }
-          });
-        });
-      });
-      
-      
-  
-    const submitAnswer = document.createElement('button');
-    submitAnswer.textContent = 'Submit';
-    questionContainer.appendChild(submitAnswer);
-  
-    submitAnswer.addEventListener('click', () => evaluateAnswer(questionObj));
-  };
-  
-  const evaluateAnswer = (questionObj) => {
-    const attemptedAnswer = document.querySelector('input[name="answer-value"]:checked');
-    const isCorrect = attemptedAnswer && attemptedAnswer.value.toLowerCase() === questionObj.correctAnswer.toLowerCase();
+
+    localStorage.setItem('selectedCategory',category);
     
-    if (isCorrect) {
-      const score = questionObj.difficulty === 'easy' ? 10 : questionObj.difficulty === 'medium' ? 15 : 20;
-      questionIndex % 2 === 0 ? player1Score += score : player2Score += score;
+    const difficulties = ['easy','medium','hard'];
+    totalQuestions = [];
+
+    try {
+      for(let difficulty of difficulties){
+        const response = await fetch(`https://the-trivia-api.com/v2/questions?categories=${category}&difficulties=${difficulty}&limit=2`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
+      const data = await response.json();
+      if (data && data.length > 0) {
+        totalQuestions = totalQuestions.concat(data); 
+      }
+      }
+
+      questionIndex = 0;
+      document.getElementById('categories_container').style.display = 'none';
+      document.getElementById('questionsContainer').style.display = 'block';
+      showQuestion();
+    } catch (error) {
+      alert('Error fetching questions. Please try again later.');
     }
+  }
+
+  //function to disable the category
+  function disableCategory(category){
+    const categoryDrop = document.getElementById('category_selection');
+    if(!categoryDrop) return;
+
+    const options = categoryDrop.getElementsByTagName('option');
+    for(let option of options){
+      if(option.value === category){
+        option.remove();
+        break;
+      }
+    }
+  }
+
+//Questions Element field
+function showQuestion(){
   
-    questionIndex++;
-    displayNextQuestion();
-  };
-  
-  const selectAnotherCategory = () => {
+  if(questionIndex >= totalQuestions.length){
+    document.getElementById('continue-or-endgame').style.display = 'block';
     document.getElementById('questionsContainer').style.display = 'none';
-    document.getElementById('categorySelection').style.display = 'block';
-    document.getElementById('postQuestionOptions').style.display = 'none';
-  };
+    return;
+  }
   
-  const endGame = () => {
-    const player1 = localStorage.getItem('player1');
-    const player2 = localStorage.getItem('player2');
-    const questionContainer = document.getElementById('questionsContainer');
-    questionContainer.innerHTML = `<h1>Final Score:</h1>
-                                    <p>${player1}: ${player1Score} points <br>
-                                     ${player2}: ${player2Score} points</p>`;
-                                    
-    if (player1Score > player2Score) {
-      alert(`${player1} won the Game!`);
-    } else if (player2Score > player1Score) {
-      alert(`${player2} won the Game!`);
-    } else {
-      alert("It's a tie!");
+  const question = totalQuestions[questionIndex];
+  const questionText = question.question.text;
+  const currentLevel = question.difficulty;
+
+  if(questionIndex % 2 === 0){
+    currentPlayer = localStorage.getItem('player1');
+    oppositePlayer = localStorage.getItem('player2');
+  }
+  
+  if(questionIndex % 2 !== 0){
+    currentPlayer = localStorage.getItem('player2');
+    oppositePlayer = localStorage.getItem('player1');
+  }
+  
+  document.getElementById('head').innerHTML = `${currentPlayer} ⚔️ ${oppositePlayer}`
+  document.getElementById('level').innerHTML = `Level: ${currentLevel}`;
+  document.getElementById('question').innerHTML = `${currentPlayer}'s turn <br><br> ${questionText}`;
+  
+
+  const result = document.getElementById('result');
+  result.innerHTML = `${localStorage.getItem('player1')}: ${player1Score} points | ${localStorage.getItem('player2')}: ${player2Score} points`;
+  
+  const answerButtons = document.getElementById('answer-buttons');
+  answerButtons.innerHTML = '';
+
+  const options = question.incorrectAnswers.concat(question.correctAnswer);
+  options.sort(function() {
+    return Math.random() - 0.5;
+  });
+
+  options.forEach(option =>{
+    const button = document.createElement('button');
+    button.textContent = option;
+    button.classList.add('btn2');
+    button.onclick = () => {
+      evaluateAnswer(question, button, option);
+      questionIndex++;
+    };
+    answerButtons.appendChild(button);
+  });
+}
+
+//function to evaluate answers
+function evaluateAnswer(question, button, selectedOption){
+
+  const isCorrect = selectedOption === question.correctAnswer;
+  button.style.backgroundColor = isCorrect ? 'green' : 'red';
+
+  setTimeout(() => {
+    if (isCorrect) {
+      button.style.backgroundColor = 'green';
     }
-    document.getElementById('postQuestionOptions').style.display = 'none';
-  };
-  
+    else{
+      button.style.backgroundColor = 'red';
+    }
+    showQuestion();
+  }, 1000);
+
+  if(isCorrect){
+    if(question.difficulty === 'easy'){
+      score = 10;
+    }
+    if(question.difficulty === 'medium'){
+      score = 15;
+    }
+    if(question.difficulty === 'hard'){
+      score = 20;
+    }
+
+    if (questionIndex % 2 === 0){
+      player1Score += score;
+    }
+    if(questionIndex % 2 !==0) {
+      player2Score += score;
+    }
+  }
+
+  const result = document.getElementById('result');
+  result.innerHTML = `${localStorage.getItem('player1')}: ${player1Score} points | ${localStorage.getItem('player2')}: ${player2Score} points`;
+}
+
+//function to continue game
+function continueGame(){
+  const category = document.getElementById('category_selection').value;
+  disableCategory(category);
+  document.getElementById('questionsContainer').style.display = 'none';
+  document.getElementById('categories_container').style.display = 'block';
+  document.getElementById('continue-or-endgame').style.display = 'none';
+}
+
+//function to end game
+function endGame(){
+  const player1 = localStorage.getItem('player1');
+  const player2 = localStorage.getItem('player2');
+
+  document.getElementById('player1-final-score').textContent = `${player1}: ${player1Score} points`;
+  document.getElementById('player2-final-score').textContent = `${player2}: ${player2Score} points`;
+
+  let winner;
+  if(player1Score > player2Score){
+    winner = `${player1} won the game 🤩`;
+  }else if (player2Score > player1Score){
+    winner = `${player2} won the game 🤩`;
+  }
+  else{
+    winner = "It is a draw!";
+  }
+  document.getElementById('winner').textContent = winner;
+
+  document.getElementById('final-score').style.display = 'block';
+  document.getElementById('questionsContainer').style.display = 'none';
+  document.getElementById('continue-or-endgame').style.display = 'none';
+}
